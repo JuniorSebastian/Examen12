@@ -150,7 +150,7 @@ export default function HomePage() {
       </p>
 
       <div className="flex flex-col sm:flex-row justify-center items-start gap-8">
-        {/* Sección para Categorías con Formulario de Creación */}
+        {/* Sección para Categorías con Formulario de Creaciónasasa */}
         <div className="bg-blue-100 p-6 rounded-lg shadow-md w-full sm:w-1/2 lg:w-1/3 transition-transform transform hover:scale-105">
           <h2 className="text-2xl font-bold text-blue-800 mb-4">Crear Nueva Categoría</h2>
           <p className="text-gray-700 mb-6">
