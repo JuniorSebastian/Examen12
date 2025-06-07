@@ -23,12 +23,18 @@ export default function CategoriasPage() {
       setLoading(true);
       const response = await fetch('/api/categorias');
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Mejor manejo de errores: intenta leer el mensaje de error del servidor
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
       const data: Categoria[] = await response.json();
       setCategorias(data);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) { // CAMBIO CLAVE: de 'any' a 'unknown'
+      if (e instanceof Error) { // Verificación del tipo de error
+        setError(e.message);
+      } else {
+        setError("Ocurrió un error desconocido al cargar categorías.");
+      }
     } finally {
       setLoading(false);
     }
@@ -97,8 +103,12 @@ export default function CategoriasPage() {
 
       closeModal();
       fetchCategorias(); // Recargar la lista de categorías
-    } catch (e: any) {
-      setFormError(e.message);
+    } catch (e: unknown) { // CAMBIO CLAVE: de 'any' a 'unknown'
+      if (e instanceof Error) { // Verificación del tipo de error
+        setFormError(e.message);
+      } else {
+        setFormError("Ocurrió un error desconocido al guardar la categoría.");
+      }
     }
   };
 
@@ -117,8 +127,12 @@ export default function CategoriasPage() {
       }
 
       fetchCategorias(); // Recargar la lista
-    } catch (e: any) {
-      alert(`Error al eliminar categoría: ${e.message}`);
+    } catch (e: unknown) { // CAMBIO CLAVE: de 'any' a 'unknown'
+      if (e instanceof Error) { // Verificación del tipo de error
+        alert(`Error al eliminar categoría: ${e.message}`);
+      } else {
+        alert("Ocurrió un error desconocido al eliminar la categoría.");
+      }
     }
   };
 
