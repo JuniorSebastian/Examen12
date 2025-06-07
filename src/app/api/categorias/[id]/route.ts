@@ -2,15 +2,16 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
-// Definición de tipo para los parámetros de la URL dinámica
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
+// ELIMINAR O COMENTAR esta interfaz RouteParams ya no es necesaria aquí.
+// interface RouteParams {
+//   params: {
+//     id: string;
+//   };
+// }
 
 // GET: Obtener una categoría por ID
-export async function GET(request: Request, { params }: RouteParams) {
+// CAMBIO CLAVE: El tipo `{ params: { id: string } }` se aplica directamente a la desestructuración del segundo argumento.
+export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
     const id = parseInt(params.id);
 
@@ -30,7 +31,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     }
 
     return NextResponse.json(categoria, { status: 200 });
-  } catch (error: unknown) { // CAMBIO CLAVE: de 'any' a 'unknown'
+  } catch (error: unknown) {
     console.error('Error al obtener categoría por ID:', error);
     if (error instanceof Error) {
       return NextResponse.json({ message: `Error interno del servidor: ${error.message}` }, { status: 500 });
@@ -40,7 +41,8 @@ export async function GET(request: Request, { params }: RouteParams) {
 }
 
 // PUT: Actualizar una categoría por ID
-export async function PUT(request: Request, { params }: RouteParams) {
+// Aplicar el mismo cambio aquí
+export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
     const id = parseInt(params.id);
     const body = await request.json();
@@ -60,10 +62,10 @@ export async function PUT(request: Request, { params }: RouteParams) {
     });
 
     return NextResponse.json(categoriaActualizada, { status: 200 });
-  } catch (error: unknown) { // CAMBIO CLAVE: de 'any' a 'unknown'
+  } catch (error: unknown) {
     if (error instanceof Error) {
       // Manejo específico para errores de Prisma
-      const prismaError = error as any; // Cast a any para acceder a propiedades específicas de PrismaClientKnownRequestError
+      const prismaError = error as any;
       if (prismaError.code === 'P2002' && prismaError.meta?.target?.includes('nombre')) {
         return NextResponse.json({ message: 'Ya existe una categoría con este nombre.' }, { status: 409 });
       }
@@ -79,7 +81,8 @@ export async function PUT(request: Request, { params }: RouteParams) {
 }
 
 // DELETE: Eliminar una categoría por ID
-export async function DELETE(request: Request, { params }: RouteParams) {
+// Aplicar el mismo cambio aquí
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
     const id = parseInt(params.id);
 
@@ -92,7 +95,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     });
 
     return NextResponse.json({ message: 'Categoría eliminada exitosamente.' }, { status: 200 });
-  } catch (error: unknown) { // CAMBIO CLAVE: de 'any' a 'unknown'
+  } catch (error: unknown) {
     if (error instanceof Error) {
       const prismaError = error as any;
       if (prismaError.code === 'P2025') {
