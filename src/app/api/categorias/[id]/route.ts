@@ -1,26 +1,25 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
-// Asegúrate de que esta interfaz NO esté presente en tu archivo:
-// interface RouteParams {
-//   params: {
-//     id: string;
-//   };
-// }
+// Función auxiliar para obtener el ID desde la URL
+function getIdFromUrl(request: NextRequest): number | null {
+  const urlParts = request.nextUrl.pathname.split('/');
+  const idStr = urlParts[urlParts.length - 1];
+  const id = parseInt(idStr);
+  return isNaN(id) ? null : id;
+}
 
-// GET: Obtener una categoría por ID
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest) {
   try {
-    const id = parseInt(params.id);
-
-    if (isNaN(id)) {
+    const id = getIdFromUrl(request);
+    if (!id) {
       return NextResponse.json({ message: 'ID de categoría inválido.' }, { status: 400 });
     }
 
     const categoria = await prisma.categoria.findUnique({
       where: { id },
       include: {
-        productos: true, // Opcional: Incluir los productos asociados a la categoría
+        productos: true,
       },
     });
 
@@ -29,7 +28,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     }
 
     return NextResponse.json(categoria, { status: 200 });
-  } catch (error: unknown) { // Usar 'unknown' para el error
+  } catch (error: unknown) {
     console.error('Error al obtener categoría por ID:', error);
     if (error instanceof Error) {
       return NextResponse.json({ message: `Error interno del servidor: ${error.message}` }, { status: 500 });
@@ -38,19 +37,18 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-// PUT: Actualizar una categoría por ID
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest) {
   try {
-    const id = parseInt(params.id);
-    const body = await request.json();
-    const { nombre } = body;
-
-    if (isNaN(id)) {
+    const id = getIdFromUrl(request);
+    if (!id) {
       return NextResponse.json({ message: 'ID de categoría inválido.' }, { status: 400 });
     }
 
+    const body = await request.json();
+    const { nombre } = body;
+
     if (!nombre || typeof nombre !== 'string' || nombre.trim() === '') {
-      return NextResponse.json({ message: 'El nombre de la categoría es requerido y debe ser una cadena de texto.' }, { status: 400 });
+      return NextResponse.json({ message: 'El nombre de la categoría es requerido.' }, { status: 400 });
     }
 
     const categoriaActualizada = await prisma.categoria.update({
@@ -59,10 +57,9 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     });
 
     return NextResponse.json(categoriaActualizada, { status: 200 });
-  } catch (error: unknown) { // Usar 'unknown' para el error
+  } catch (error: unknown) {
     if (error instanceof Error) {
-      // Manejo específico para errores de Prisma
-      const prismaError = error as any; // Castear a 'any' para acceder a propiedades específicas de PrismaClientKnownRequestError
+      const prismaError = error as any;
       if (prismaError.code === 'P2002' && prismaError.meta?.target?.includes('nombre')) {
         return NextResponse.json({ message: 'Ya existe una categoría con este nombre.' }, { status: 409 });
       }
@@ -72,17 +69,14 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       console.error('Error al actualizar categoría:', error);
       return NextResponse.json({ message: `Error interno del servidor: ${error.message}` }, { status: 500 });
     }
-    console.error('Error desconocido al actualizar categoría:', error);
     return NextResponse.json({ message: 'Error interno del servidor (desconocido)' }, { status: 500 });
   }
 }
 
-// DELETE: Eliminar una categoría por ID
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest) {
   try {
-    const id = parseInt(params.id);
-
-    if (isNaN(id)) {
+    const id = getIdFromUrl(request);
+    if (!id) {
       return NextResponse.json({ message: 'ID de categoría inválido.' }, { status: 400 });
     }
 
@@ -91,19 +85,18 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     });
 
     return NextResponse.json({ message: 'Categoría eliminada exitosamente.' }, { status: 200 });
-  } catch (error: unknown) { // Usar 'unknown' para el error
+  } catch (error: unknown) {
     if (error instanceof Error) {
       const prismaError = error as any;
       if (prismaError.code === 'P2025') {
         return NextResponse.json({ message: 'Categoría no encontrada para eliminar.' }, { status: 404 });
       }
-      if (prismaError.code === 'P2003') { // Foreign key constraint failed
-        return NextResponse.json({ message: 'No se puede eliminar la categoría porque tiene productos asociados. Elimine los productos primero.' }, { status: 409 });
+      if (prismaError.code === 'P2003') {
+        return NextResponse.json({ message: 'No se puede eliminar la categoría porque tiene productos asociados.' }, { status: 409 });
       }
       console.error('Error al eliminar categoría:', error);
       return NextResponse.json({ message: `Error interno del servidor: ${error.message}` }, { status: 500 });
     }
-    console.error('Error desconocido al eliminar categoría:', error);
     return NextResponse.json({ message: 'Error interno del servidor (desconocido)' }, { status: 500 });
   }
 }
