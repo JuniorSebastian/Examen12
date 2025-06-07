@@ -1,4 +1,3 @@
-// app/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -40,8 +39,12 @@ export default function HomePage() {
       }
       const data: Categoria[] = await response.json();
       setCategorias(data);
-    } catch (e: any) {
-      setErrorLoadingCategorias(e.message);
+    } catch (e: unknown) { // CAMBIO CLAVE: de 'any' a 'unknown'
+      if (e instanceof Error) {
+        setErrorLoadingCategorias(e.message);
+      } else {
+        setErrorLoadingCategorias('Un error desconocido ocurrió al cargar categorías.');
+      }
     } finally {
       setLoadingCategorias(false);
     }
@@ -79,8 +82,12 @@ export default function HomePage() {
       setCategoriaFormSuccess('¡Categoría creada con éxito!');
       // Ahora podemos llamar a fetchCategoriasForSelect() aquí sin problema
       fetchCategoriasForSelect(); // Vuelve a cargar las categorías para el select de productos
-    } catch (error: any) {
-      setCategoriaFormError(`Error al crear categoría: ${error.message}`);
+    } catch (error: unknown) { // CAMBIO CLAVE: de 'any' a 'unknown'
+      if (error instanceof Error) {
+        setCategoriaFormError(`Error al crear categoría: ${error.message}`);
+      } else {
+        setCategoriaFormError('Un error desconocido ocurrió al crear la categoría.');
+      }
     }
   };
 
@@ -135,8 +142,12 @@ export default function HomePage() {
       setNewProductoStock('');
       setNewProductoCategoriaId('');
       setProductoFormSuccess('¡Producto creado con éxito!');
-    } catch (error: any) {
-      setProductoFormError(`Error al crear producto: ${error.message}`);
+    } catch (error: unknown) { // CAMBIO CLAVE: de 'any' a 'unknown'
+      if (error instanceof Error) {
+        setProductoFormError(`Error al crear producto: ${error.message}`);
+      } else {
+        setProductoFormError('Un error desconocido ocurrió al crear el producto.');
+      }
     }
   };
 
@@ -150,7 +161,7 @@ export default function HomePage() {
       </p>
 
       <div className="flex flex-col sm:flex-row justify-center items-start gap-8">
-        {/* Sección para Categorías con Formulario de Creaciónasasa */}
+        {/* Sección para Categorías con Formulario de Creación */}
         <div className="bg-blue-100 p-6 rounded-lg shadow-md w-full sm:w-1/2 lg:w-1/3 transition-transform transform hover:scale-105">
           <h2 className="text-2xl font-bold text-blue-800 mb-4">Crear Nueva Categoría</h2>
           <p className="text-gray-700 mb-6">

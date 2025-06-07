@@ -1,8 +1,7 @@
-// app/api/categorias/[id]/route.ts
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
-// ELIMINAR O COMENTAR esta interfaz RouteParams ya no es necesaria aquí.
+// Asegúrate de que esta interfaz NO esté presente en tu archivo:
 // interface RouteParams {
 //   params: {
 //     id: string;
@@ -10,7 +9,6 @@ import prisma from '@/lib/prisma';
 // }
 
 // GET: Obtener una categoría por ID
-// CAMBIO CLAVE: El tipo `{ params: { id: string } }` se aplica directamente a la desestructuración del segundo argumento.
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
     const id = parseInt(params.id);
@@ -31,7 +29,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     }
 
     return NextResponse.json(categoria, { status: 200 });
-  } catch (error: unknown) {
+  } catch (error: unknown) { // Usar 'unknown' para el error
     console.error('Error al obtener categoría por ID:', error);
     if (error instanceof Error) {
       return NextResponse.json({ message: `Error interno del servidor: ${error.message}` }, { status: 500 });
@@ -41,7 +39,6 @@ export async function GET(request: Request, { params }: { params: { id: string }
 }
 
 // PUT: Actualizar una categoría por ID
-// Aplicar el mismo cambio aquí
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
     const id = parseInt(params.id);
@@ -62,10 +59,10 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     });
 
     return NextResponse.json(categoriaActualizada, { status: 200 });
-  } catch (error: unknown) {
+  } catch (error: unknown) { // Usar 'unknown' para el error
     if (error instanceof Error) {
       // Manejo específico para errores de Prisma
-      const prismaError = error as any;
+      const prismaError = error as any; // Castear a 'any' para acceder a propiedades específicas de PrismaClientKnownRequestError
       if (prismaError.code === 'P2002' && prismaError.meta?.target?.includes('nombre')) {
         return NextResponse.json({ message: 'Ya existe una categoría con este nombre.' }, { status: 409 });
       }
@@ -81,7 +78,6 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 }
 
 // DELETE: Eliminar una categoría por ID
-// Aplicar el mismo cambio aquí
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
     const id = parseInt(params.id);
@@ -95,7 +91,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     });
 
     return NextResponse.json({ message: 'Categoría eliminada exitosamente.' }, { status: 200 });
-  } catch (error: unknown) {
+  } catch (error: unknown) { // Usar 'unknown' para el error
     if (error instanceof Error) {
       const prismaError = error as any;
       if (prismaError.code === 'P2025') {

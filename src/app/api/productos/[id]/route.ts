@@ -1,4 +1,3 @@
-// app/api/productos/[id]/route.ts
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
@@ -23,9 +22,12 @@ export async function GET(request: Request, { params }: { params: { id: string }
     }
 
     return NextResponse.json(producto, { status: 200 });
-  } catch (error) {
+  } catch (error: unknown) { // Usar 'unknown' para el error
     console.error('Error al obtener producto por ID:', error);
-    return NextResponse.json({ message: 'Error interno del servidor' }, { status: 500 });
+    if (error instanceof Error) {
+      return NextResponse.json({ message: `Error interno del servidor: ${error.message}` }, { status: 500 });
+    }
+    return NextResponse.json({ message: 'Error interno del servidor (desconocido)' }, { status: 500 });
   }
 }
 
@@ -44,7 +46,12 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ message: 'Todos los campos obligatorios (nombre, precio, stock, categoriaId) son requeridos.' }, { status: 400 });
     }
 
-    if (isNaN(parseFloat(precio)) || isNaN(parseInt(stock)) || isNaN(parseInt(categoriaId))) {
+    // Validar que precio, stock y categoriaId sean números válidos
+    const parsedPrecio = parseFloat(precio);
+    const parsedStock = parseInt(stock);
+    const parsedCategoriaId = parseInt(categoriaId);
+
+    if (isNaN(parsedPrecio) || isNaN(parsedStock) || isNaN(parsedCategoriaId)) {
       return NextResponse.json({ message: 'Precio, stock y categoriaId deben ser números válidos.' }, { status: 400 });
     }
 
@@ -53,22 +60,27 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       data: {
         nombre,
         descripcion,
-        precio: parseFloat(precio),
-        stock: parseInt(stock),
-        categoriaId: parseInt(categoriaId),
+        precio: parsedPrecio,
+        stock: parsedStock,
+        categoriaId: parsedCategoriaId,
       },
     });
 
     return NextResponse.json(productoActualizado, { status: 200 });
-  } catch (error: any) {
-    if (error.code === 'P2025') {
-      return NextResponse.json({ message: 'Producto no encontrado para actualizar.' }, { status: 404 });
+  } catch (error: unknown) { // Usar 'unknown' para el error
+    if (error instanceof Error) {
+      const prismaError = error as any; // Castear a 'any' para acceder a propiedades específicas de PrismaClientKnownRequestError
+      if (prismaError.code === 'P2025') {
+        return NextResponse.json({ message: 'Producto no encontrado para actualizar.' }, { status: 404 });
+      }
+      if (prismaError.code === 'P2003' && prismaError.meta?.cause?.includes('foreign key constraint failed')) {
+        return NextResponse.json({ message: 'La categoriaId proporcionada no existe.' }, { status: 400 });
+      }
+      console.error('Error al actualizar producto:', error);
+      return NextResponse.json({ message: `Error interno del servidor: ${error.message}` }, { status: 500 });
     }
-    if (error.code === 'P2003' && error.meta?.cause?.includes('foreign key constraint failed')) {
-      return NextResponse.json({ message: 'La categoriaId proporcionada no existe.' }, { status: 400 });
-    }
-    console.error('Error al actualizar producto:', error);
-    return NextResponse.json({ message: 'Error interno del servidor' }, { status: 500 });
+    console.error('Error desconocido al actualizar producto:', error);
+    return NextResponse.json({ message: 'Error interno del servidor (desconocido)' }, { status: 500 });
   }
 }
 
@@ -86,11 +98,16 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     });
 
     return NextResponse.json({ message: 'Producto eliminado exitosamente.' }, { status: 200 });
-  } catch (error: any) {
-    if (error.code === 'P2025') {
-      return NextResponse.json({ message: 'Producto no encontrado para eliminar.' }, { status: 404 });
+  } catch (error: unknown) { // Usar 'unknown' para el error
+    if (error instanceof Error) {
+      const prismaError = error as any;
+      if (prismaError.code === 'P2025') {
+        return NextResponse.json({ message: 'Producto no encontrado para eliminar.' }, { status: 404 });
+      }
+      console.error('Error al eliminar producto:', error);
+      return NextResponse.json({ message: `Error interno del servidor: ${error.message}` }, { status: 500 });
     }
-    console.error('Error al eliminar producto:', error);
-    return NextResponse.json({ message: 'Error interno del servidor' }, { status: 500 });
+    console.error('Error desconocido al eliminar producto:', error);
+    return NextResponse.json({ message: 'Error interno del servidor (desconocido)' }, { status: 500 });
   }
 }

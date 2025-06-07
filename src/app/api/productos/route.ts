@@ -1,4 +1,3 @@
-// app/api/productos/route.ts
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
@@ -14,9 +13,12 @@ export async function GET() {
       },
     });
     return NextResponse.json(productos, { status: 200 });
-  } catch (error) {
+  } catch (error: unknown) { // Changed from 'error' to 'error: unknown'
     console.error('Error al obtener productos:', error);
-    return NextResponse.json({ message: 'Error interno del servidor' }, { status: 500 });
+    if (error instanceof Error) { // Type guard for Error instances
+      return NextResponse.json({ message: `Error interno del servidor: ${error.message}` }, { status: 500 });
+    }
+    return NextResponse.json({ message: 'Error interno del servidor (desconocido)' }, { status: 500 });
   }
 }
 
@@ -44,11 +46,16 @@ export async function POST(request: Request) {
       },
     });
     return NextResponse.json(nuevoProducto, { status: 201 });
-  } catch (error: any) {
-    if (error.code === 'P2025' && error.meta?.cause?.includes('foreign key constraint failed')) {
-      return NextResponse.json({ message: 'La categoriaId proporcionada no existe.' }, { status: 400 });
+  } catch (error: unknown) { // Changed from 'error: any' to 'error: unknown'
+    if (error instanceof Error) { // Type guard for Error instances
+      const prismaError = error as any; // Cast to 'any' to access Prisma-specific properties
+      if (prismaError.code === 'P2025' && prismaError.meta?.cause?.includes('foreign key constraint failed')) {
+        return NextResponse.json({ message: 'La categoriaId proporcionada no existe.' }, { status: 400 });
+      }
+      console.error('Error al crear producto:', error);
+      return NextResponse.json({ message: `Error interno del servidor: ${error.message}` }, { status: 500 });
     }
-    console.error('Error al crear producto:', error);
-    return NextResponse.json({ message: 'Error interno del servidor' }, { status: 500 });
+    console.error('Error desconocido al crear producto:', error);
+    return NextResponse.json({ message: 'Error interno del servidor (desconocido)' }, { status: 500 });
   }
 }
